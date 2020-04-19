@@ -1026,7 +1026,9 @@ func (m *Map) GetModel() *models.BPFMap {
 func (m *Map) resolveErrors(ctx context.Context) error {
 	started := time.Now()
 
-	m.lock.Lock()
+	if err := m.openAndLock(); err != nil {
+		return err
+	}
 	defer m.lock.Unlock()
 
 	if m.cache == nil {
