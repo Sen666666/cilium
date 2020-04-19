@@ -19,6 +19,7 @@ package bpf
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 	"sync"
@@ -137,6 +138,15 @@ func (s *BPFPrivilegedTestSuite) TestOpen(c *C) {
 	c.Assert(err, IsNil)
 }
 
+// deepEquals compares the current map against another map to see that the
+// attributes of the two maps are the same.
+func deepEquals(m, other *Map) bool {
+	return m.name == other.name &&
+		m.path == other.path &&
+		m.NonPersistent == other.NonPersistent &&
+		reflect.DeepEqual(m.MapInfo, other.MapInfo)
+}
+
 func (s *BPFPrivilegedTestSuite) TestOpenMap(c *C) {
 	openedMap, err := OpenMap("cilium_test_no_exist")
 	c.Assert(err, Not(IsNil))
@@ -152,7 +162,7 @@ func (s *BPFPrivilegedTestSuite) TestOpenMap(c *C) {
 		testMap.MapKey = &TestKey{}
 		testMap.MapValue = &TestValue{}
 	}()
-	noDiff := openedMap.DeepEquals(testMap)
+	noDiff := deepEquals(openedMap, testMap)
 	c.Assert(noDiff, Equals, true)
 }
 
@@ -217,7 +227,7 @@ func (s *BPFPrivilegedTestSuite) TestOpenParallel(c *C) {
 	c.Assert(err, Not(IsNil))
 
 	// Check OpenMap warning section
-	noDiff := parallelMap.DeepEquals(testMap)
+	noDiff := deepEquals(parallelMap, testMap)
 	c.Assert(noDiff, Equals, true)
 
 	key1 := &TestKey{Key: 101}
